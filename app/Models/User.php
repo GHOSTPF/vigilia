@@ -46,4 +46,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function registroVigilia()
+    {
+        return $this->hasOne(RegistroVigilia::class);
+    }
 }
