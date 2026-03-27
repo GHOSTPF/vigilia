@@ -1,8 +1,8 @@
 <?php
+use App\Http\Controllers\DashboardController;
 
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 
@@ -18,10 +18,12 @@ Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCa
 
 // Rota de Usuário Comum
 // Rota Admin (Aponta para a pasta admin arquivo painel)
+// Altere esta parte no seu web.php
 Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/dashboard/admin', function () {
-        return view('admin.painel'); 
-    })->name('dashboard.admin');
+    // Mudamos o nome para 'admin.painel' ou o que você preferir, 
+    // mas vamos usar o que está no formulário para facilitar
+    Route::get('/dashboard/admin', [DashboardController::class, 'admin'])
+        ->name('seu-dashboard.index'); 
 });
 
 // Rota Usuário (Aponta para o arquivo dashboard na raiz das views)
