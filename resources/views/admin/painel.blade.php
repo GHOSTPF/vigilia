@@ -15,6 +15,30 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="max-w-sm bg-white rounded-lg shadow-md p-6 mb-4">
+                    <h2 class="text-xl font-bold mb-2">Total de Inscrições</h2>
+                    <p class="text-gray-600">Número total de inscrições registradas.</p>
+                    <div class="mt-4">
+                        <span class="text-3xl font-bold text-indigo-600">{{ $totalRegistros }}</span>
+                    </div>
+                </div>
+                <div class="max-w-sm bg-white rounded-lg shadow-md p-6 mb-4">
+                    <h2 class="text-xl font-bold mb-2">Menores de Idade</h2>
+                    <p class="text-gray-600">Inscritos com menos de 18 anos.</p>
+                    <div class="mt-4">
+                        <span class="text-3xl font-bold text-red-500">{{ $menores }}</span>
+                    </div>
+                </div>
+
+                <div class="max-w-sm bg-white rounded-lg shadow-md p-6 mb-4">
+                    <h2 class="text-xl font-bold mb-2">Maiores de Idade</h2>
+                    <p class="text-gray-600">Inscritos com 18 anos ou mais.</p>
+                    <div class="mt-4">
+                        <span class="text-3xl font-bold text-green-600">{{ $maiores }}</span>
+                    </div>
+                </div>
+            </div>
             <div class="bg-white shadow-sm border border-gray-100 rounded-2xl p-6">
                 
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -50,6 +74,7 @@
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Documentos</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Contato</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Responsável</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Anexos</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Ações</th>
                             </tr>
                         </thead>
@@ -67,20 +92,99 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            {{ $registro->idade }} anos
+                                            @if ($registro->idade >= 18)
+                                                {{ $registro->idade }} anos
+                                            @else
+                                                {{ $registro->idade }} ano
+                                            @endif
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                         <div class="flex flex-col">
-                                            <span class="font-medium text-gray-900">{{ $registro->cpf_rg }}</span>
-                                            <span class="text-xs text-gray-400 uppercase tracking-tighter">CPF/RG</span>
+                                            <span class="font-medium text-gray-900">
+                                                @php
+                                                    $valor = preg_replace("/[^0-9]/", "", $registro->cpf_rg);
+                                                    if (strlen($valor) === 11) {
+                                                        $formatado = vsprintf('%s%s%s.%s%s%s.%s%s%s-%s%s', str_split($valor));
+                                                    } else {
+                                                        $formatado = $registro->cpf_rg; // Caso não seja CPF, mantém como está
+                                                    }
+                                                @endphp
+
+                                                {{ $formatado }}
+                                            <span class="text-xs text-gray-400 uppercase tracking-tighter ml-2">CPF/RG</span></span>
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                        {{ $registro->telefone }}
+                                        @php
+                                            $tel = preg_replace('/[^0-9]/', '', $registro->telefone);
+                                            
+                                            if (strlen($tel) === 11) {
+                                                $telFormatado = preg_replace('/(\d{2})(\d{5})(\d{4})/', '($1) $2-$3', $tel);
+                                            } elseif (strlen($tel) === 10) {
+                                                $telFormatado = preg_replace('/(\d{2})(\d{4})(\d{4})/', '($1) $2-$3', $tel);
+                                            } else {
+                                                $telFormatado = $registro->telefone; 
+                                            }
+                                        @endphp
+
+                                        {{ $telFormatado }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-900">{{ $registro->nome_responsavel ?? 'N/A' }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        <div class="flex justify-center items-center gap-3" x-data="{ open: false }">
+                                            
+                                            <button 
+                                                @click="$dispatch('open-modal', 'modal-docs-{{ $registro->id }}')"
+                                                class="flex items-center gap-1 text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-2 py-1 rounded-md transition"
+                                                title="Ver Documentos"
+                                            >
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                                <span class="text-xs font-bold">Anexado</span>
+                                            </button>
+
+                                            <button class="text-red-400 hover:text-red-600 transition">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+
+                                            <x-modal name="modal-docs-{{ $registro->id }}" focusable>
+                                                <div class="p-6">
+                                                    <h2 class="text-lg font-bold text-gray-900 mb-4">
+                                                        Documentos de: {{ $registro->user->name }}
+                                                    </h2>
+
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div class="border rounded-xl p-4 flex flex-col items-center">
+                                                            <p class="text-sm font-semibold mb-2">Termo de Autorização</p>
+                                                            @if($registro->termo_autorizacao_path)
+                                                                <iframe src="{{ asset('storage/' . $registro->termo_autorizacao_path) }}" class="w-full h-64 rounded border mb-2"></iframe>
+                                                                <a href="{{ asset('storage/' . $registro->termo_autorizacao_path) }}" target="_blank" class="text-blue-600 text-xs underline">Abrir em nova aba</a>
+                                                            @else
+                                                                <p class="text-xs text-gray-400">Não enviado</p>
+                                                            @endif
+                                                        </div>
+
+                                                        <div class="border rounded-xl p-4 flex flex-col items-center">
+                                                            <p class="text-sm font-semibold mb-2">Doc. Responsável</p>
+                                                            @if($registro->doc_responsavel_path)
+                                                                <iframe src="{{ asset('storage/' . $registro->doc_responsavel_path) }}" class="w-full h-64 rounded border mb-2"></iframe>
+                                                                <a href="{{ asset('storage/' . $registro->doc_responsavel_path) }}" target="_blank" class="text-blue-600 text-xs underline">Abrir em nova aba</a>
+                                                            @else
+                                                                <p class="text-xs text-gray-400">Não enviado</p>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mt-6 flex justify-end">
+                                                        <x-secondary-button x-on:click="$dispatch('close')">
+                                                            Fechar
+                                                        </x-secondary-button>
+                                                    </div>
+                                                </div>
+                                            </x-modal>
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex justify-end gap-2">

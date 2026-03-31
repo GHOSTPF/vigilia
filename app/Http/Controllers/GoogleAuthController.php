@@ -32,7 +32,7 @@ class GoogleAuthController extends Controller
 
         // Lógica de Redirecionamento Baseada em Role
         if ($user->role === 'admin') {
-            return redirect()->route('dashboard.admin');
+            return redirect()->route('seu-dashboard.index');
         }
 
         return redirect()->route('dashboard.user');
